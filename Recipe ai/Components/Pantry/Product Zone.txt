@@ -1,0 +1,68 @@
+import React, { useState } from react;
+import { Card, CardContent, CardHeader, CardTitle } from @componentsuicard;
+import { Input } from @componentsuiinput;
+import { Label } from @componentsuilabel;
+import { Button } from @componentsuibutton;
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from @componentsuiselect;
+import { Textarea } from @componentsuitextarea;
+import { Save, X, Package } from lucide-react;
+import { motion } from framer-motion;
+
+const CATEGORIES = [
+  { value frutas, label Frutas, emoji 🍎 },
+  { value verduras, label Verduras, emoji 🥕 },
+  { value carnes, label Carnes, emoji 🥩 },
+  { value pescados, label Pescados, emoji 🐟 },
+  { value lacteos, label Lácteos, emoji 🥛 },
+  { value cereales, label Cereales, emoji 🌾 },
+  { value legumbres, label Legumbres, emoji 🫘 },
+  { value especias, label Especias, emoji 🌶️ },
+  { value aceites, label Aceites, emoji 🫒 },
+  { value otros, label Otros, emoji 📦 }
+];
+
+const UNITS = [
+  { value piezas, label Piezas },
+  { value kg, label Kilogramos },
+  { value g, label Gramos },
+  { value l, label Litros },
+  { value ml, label Mililitros },
+  { value latas, label Latas },
+  { value paquetes, label Paquetes }
+];
+
+const LOCATIONS = [
+  { value despensa, label Despensa, emoji 🏪 },
+  { value nevera, label Nevera, emoji ❄️ },
+  { value congelador, label Congelador, emoji 🧊 }
+];
+
+export default function ProductForm({ product, onSave, onCancel }) {
+  const [formData, setFormData] = useState(product  {
+    name ,
+    quantity 1,
+    unit piezas,
+    category otros,
+    location despensa,
+    expiry_date ,
+    purchase_date new Date().toISOString().split('T')[0],
+    notes 
+  });
+
+  const handleSubmit = (e) = {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const handleChange = (field, value) = {
+    setFormData(prev = ({ ...prev, [field] value }));
+  };
+
+  return (
+    motion.div
+      initial={{ opacity 0, y -20 }}
+      animate={{ opacity 1, y 0 }}
+      exit={{ opacity 0, y -20 }}
+      className=mb-8
+    
+ 

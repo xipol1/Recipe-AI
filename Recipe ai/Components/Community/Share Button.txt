@@ -1,0 +1,43 @@
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Share2 } from "lucide-react";
+import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
+
+export default function ShareButton({ recipeId, recipeTitle }) {
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}${createPageUrl(`ViewRecipe?id=${recipeId}`)}`;
+    const shareData = {
+      title: `Receta: ${recipeTitle}`,
+      text: `¡Mira esta deliciosa receta que encontré en DespensaIA: ${recipeTitle}!`,
+      url: shareUrl,
+    };
+
+    const fallbackShare = () => {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success("Enlace de la receta copiado al portapapeles");
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // Si el usuario cancela la acción, no hacer nada
+        if (err.name === 'AbortError') {
+          return;
+        }
+        // Para cualquier otro error (incluyendo permiso denegado), usar fallback silenciosamente
+        fallbackShare();
+      }
+    } else {
+      // Navegador sin soporte para Web Share API
+      fallbackShare();
+    }
+  };
+
+  return (
+    <Button variant="outline" size="icon" onClick={handleShare}>
+      <Share2 className="w-5 h-5" />
+    </Button>
+  );
+}

@@ -1,0 +1,68 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Camera, Package, Sparkles, Users, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+
+const quickActions = [
+  {
+    title: "Escanear",
+    description: "Añade productos",
+    icon: Camera,
+    url: createPageUrl("ScanTicket"),
+    color: "from-blue-500 to-blue-600",
+    bgColor: "from-blue-50 to-blue-100"
+  },
+  {
+    title: "Despensa",
+    description: "Gestiona tu stock",
+    icon: Package,
+    url: createPageUrl("MyPantry"),
+    color: "from-green-500 to-emerald-600",
+    bgColor: "from-green-50 to-emerald-100"
+  },
+  {
+    title: "Recetas IA",
+    description: "Inspiración IA",
+    icon: Sparkles,
+    url: createPageUrl("AIRecipes"),
+    color: "from-purple-500 to-pink-600",
+    bgColor: "from-purple-50 to-pink-100"
+  },
+  {
+    title: "Comunidad",
+    description: "Explora recetas",
+    icon: Users,
+    url: createPageUrl("CommunityRecipes"),
+    color: "from-orange-500 to-red-600",
+    bgColor: "from-orange-50 to-red-100"
+  }
+];
+
+export default function QuickActions() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      {quickActions.map((action, index) => (
+        <motion.div
+          key={action.title}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+        >
+          <Link to={action.url}>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-0 overflow-hidden cursor-pointer h-full">
+              <CardContent className="p-4 flex flex-col items-center text-center">
+                <div className={`w-12 h-12 bg-gradient-to-r ${action.bgColor} rounded-xl flex items-center justify-center mb-3`}>
+                  <action.icon className={`w-6 h-6 bg-gradient-to-r ${action.color} bg-clip-text text-transparent`} />
+                </div>
+                <h3 className="font-bold text-sm text-gray-900">{action.title}</h3>
+                <p className="text-gray-600 text-xs hidden sm:block">{action.description}</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </motion.div>
+      ))}
+    </div>
+  );
+}

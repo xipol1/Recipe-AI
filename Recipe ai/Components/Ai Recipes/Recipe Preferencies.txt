@@ -1,0 +1,227 @@
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Settings, Clock, ChefHat, Utensils, X, Activity } from "lucide-react";
+
+const MEAL_TYPES = [
+  { value: "any", label: "Cualquier comida", emoji: "🍽️" },
+  { value: "desayuno", label: "Desayuno", emoji: "🌅" },
+  { value: "almuerzo", label: "Almuerzo", emoji: "☀️" },
+  { value: "cena", label: "Cena", emoji: "🌙" },
+  { value: "postre", label: "Postre", emoji: "🍰" },
+  { value: "snack", label: "Snack", emoji: "🥨" },
+  { value: "bebida", label: "Bebida", emoji: "🥤" }
+];
+
+const DIFFICULTIES = [
+  { value: "any", label: "Cualquier dificultad" },
+  { value: "fácil", label: "Fácil" },
+  { value: "intermedio", label: "Intermedio" },
+  { value: "difícil", label: "Difícil" }
+];
+
+const PREP_TIMES = [
+  { value: "any", label: "Sin límite de tiempo" },
+  { value: "rápida (hasta 15 min)", label: "Rápida (hasta 15 min)" },
+  { value: "moderada (15-30 min)", label: "Moderada (15-30 min)" },
+  { value: "lenta (más de 30 min)", label: "Lenta (más de 30 min)" }
+];
+
+const HEALTH_STYLES = [
+  { value: "any", label: "Sin preferencia", emoji: "⚖️" },
+  { value: "fit", label: "Fit (saludable)", emoji: "💪", description: "Bajo en calorías y grasas" },
+  { value: "balanced", label: "Balanceado", emoji: "🥗", description: "Equilibrio nutricional" },
+  { value: "indulgent", label: "Indulgente", emoji: "🍔", description: "Reconfortante y calórico" }
+];
+
+const DIETARY_RESTRICTIONS = [
+  { value: "vegetariano", label: "Vegetariano", emoji: "🥬" },
+  { value: "vegano", label: "Vegano", emoji: "🌱" },
+  { value: "sin gluten", label: "Sin gluten", emoji: "🌾" },
+  { value: "sin lactosa", label: "Sin lactosa", emoji: "🥛" },
+  { value: "keto", label: "Keto", emoji: "🥑" },
+  { value: "bajo en sodio", label: "Bajo en sodio", emoji: "🧂" },
+  { value: "saludable", label: "Saludable", emoji: "💚" },
+  { value: "sin azúcar", label: "Sin azúcar", emoji: "🍯" }
+];
+
+export default function RecipePreferences({ preferences, onPreferencesChange }) {
+  const handleChange = (field, value) => {
+    onPreferencesChange({
+      ...preferences,
+      [field]: value === 'any' ? '' : value,
+    });
+  };
+
+  const toggleDietaryRestriction = (restriction) => {
+    const current = preferences.dietary_restrictions || [];
+    const updated = current.includes(restriction)
+      ? current.filter(r => r !== restriction)
+      : [...current, restriction];
+    
+    handleChange('dietary_restrictions', updated);
+  };
+
+  const clearAllPreferences = () => {
+    onPreferencesChange({
+      meal_type: "",
+      difficulty: "", 
+      prep_time: "",
+      health_style: "",
+      dietary_restrictions: []
+    });
+  };
+
+  return (
+    <Card className="shadow-lg">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5 text-purple-600" />
+            Preferencias de Receta
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAllPreferences}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-4 h-4 mr-1" />
+            Limpiar
+          </Button>
+        </div>
+        <p className="text-sm text-gray-600">
+          Personaliza la receta que quieres generar (opcional)
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Tipo de comida */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Utensils className="w-4 h-4 inline mr-1" />
+            Tipo de comida
+          </label>
+          <Select value={preferences.meal_type || "any"} onValueChange={(value) => handleChange('meal_type', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona el tipo de comida" />
+            </SelectTrigger>
+            <SelectContent>
+              {MEAL_TYPES.map(type => (
+                <SelectItem key={type.value} value={type.value}>
+                  <div className="flex items-center gap-2">
+                    <span>{type.emoji}</span>
+                    <span>{type.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Estilo nutricional */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Activity className="w-4 h-4 inline mr-1" />
+            Estilo nutricional
+          </label>
+          <Select value={preferences.health_style || "any"} onValueChange={(value) => handleChange('health_style', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="¿Qué tan saludable?" />
+            </SelectTrigger>
+            <SelectContent>
+              {HEALTH_STYLES.map(style => (
+                <SelectItem key={style.value} value={style.value}>
+                  <div className="flex items-center gap-2">
+                    <span>{style.emoji}</span>
+                    <div className="flex flex-col">
+                      <span>{style.label}</span>
+                      {style.description && (
+                        <span className="text-xs text-gray-500">{style.description}</span>
+                      )}
+                    </div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Dificultad */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <ChefHat className="w-4 h-4 inline mr-1" />
+            Dificultad
+          </label>
+          <Select value={preferences.difficulty || "any"} onValueChange={(value) => handleChange('difficulty', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona la dificultad" />
+            </SelectTrigger>
+            <SelectContent>
+              {DIFFICULTIES.map(difficulty => (
+                <SelectItem key={difficulty.value} value={difficulty.value}>
+                  {difficulty.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tiempo de preparación */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Clock className="w-4 h-4 inline mr-1" />
+            Tiempo de preparación
+          </label>
+          <Select value={preferences.prep_time || "any"} onValueChange={(value) => handleChange('prep_time', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona el tiempo disponible" />
+            </SelectTrigger>
+            <SelectContent>
+              {PREP_TIMES.map(time => (
+                <SelectItem key={time.value} value={time.value}>
+                  {time.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Restricciones dietéticas */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Restricciones dietéticas
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {DIETARY_RESTRICTIONS.map(restriction => {
+              const isSelected = (preferences.dietary_restrictions || []).includes(restriction.value);
+              return (
+                <Badge
+                  key={restriction.value}
+                  variant={isSelected ? "default" : "outline"}
+                  className={`cursor-pointer transition-all duration-200 ${
+                    isSelected 
+                      ? "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200" 
+                      : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => toggleDietaryRestriction(restriction.value)}
+                >
+                  <span className="mr-1">{restriction.emoji}</span>
+                  {restriction.label}
+                </Badge>
+              );
+            })}
+          </div>
+          {preferences.dietary_restrictions && preferences.dietary_restrictions.length > 0 && (
+            <p className="text-xs text-gray-500 mt-2">
+              {preferences.dietary_restrictions.length} restricción(es) seleccionada(s)
+            </p>
+          )}
+        </div>
+
+        {/* Resumen de preferencias */}
+        {(preferences.meal_type || preferences.difficulty || preferences.prep_time || preferences.health_style || (preferences.dietary_restrictions && preferences.dietary_restrictions.length > 0)) && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
+            <h4 className="font-medium text-gray-900 mb-2">Resumen de preferencias:</h4>
+ 

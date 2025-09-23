@@ -1,0 +1,24 @@
+{
+  "name": "RecipeRating",
+  "type": "object",
+  "properties": {
+    "recipe_id": {
+      "type": "string",
+      "description": "ID de la receta calificada"
+    },
+    "rating": {
+      "type": "number",
+      "description": "Calificación de 1 a 5",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "comment": {
+      "type": "string",
+      "description": "Comentario opcional"
+    }
+  },
+  "required": [
+    "recipe_id",
+    "rating"
+  ]
+}

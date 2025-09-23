@@ -1,0 +1,68 @@
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Package, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
+
+const CATEGORY_COLORS = {
+  frutas: "bg-red-100 text-red-800",
+  verduras: "bg-green-100 text-green-800",
+  carnes: "bg-pink-100 text-pink-800",
+  pescados: "bg-blue-100 text-blue-800",
+  lacteos: "bg-yellow-100 text-yellow-800",
+  cereales: "bg-orange-100 text-orange-800",
+  legumbres: "bg-purple-100 text-purple-800",
+  especias: "bg-indigo-100 text-indigo-800",
+  aceites: "bg-amber-100 text-amber-800",
+  otros: "bg-gray-100 text-gray-800"
+};
+
+export default function PantryStats({ products, categories, isLoading }) {
+  const totalProducts = products.length;
+  const totalQuantity = products.reduce((sum, product) => sum + (product.quantity || 0), 0);
+  const expiringToday = products.filter(p => {
+    if (!p.expiry_date) return false;
+    const today = new Date().toDateString();
+    const expiryDate = new Date(p.expiry_date).toDateString();
+    return today === expiryDate;
+  }).length;
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Estadísticas de Despensa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="shadow-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-green-700">
+          <Package className="w-5 h-5" />
+          Estadísticas de Despensa
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Estadísticas generales */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <motion.div 
+            className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Package className="w-8 h-8 text-green-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-green-700">{totalProducts}</p>
+            <p className="text-sm text-green-600">Productos</p>
+          </motion.div>
+
+ 

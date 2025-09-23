@@ -1,0 +1,74 @@
+
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Clock, 
+  Users, 
+  ChefHat, 
+  Star, 
+  Heart,
+  Plus,
+  X,
+  Sparkles,
+  CheckCircle,
+  AlertCircle,
+  Share2,
+  Play // Added Play icon
+} from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import ShareButton from "./ShareButton";
+
+const RATING_STARS = [1, 2, 3, 4, 5];
+
+export default function RecipeModal({ recipe, userProducts, onClose, onRate, onFollowToggle, followingList, currentUserEmail }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  if (!recipe) return null;
+  
+  const isFollowing = followingList?.includes(recipe.created_by);
+  const isOwnRecipe = currentUserEmail === recipe.created_by;
+
+  const handleSubmitRating = async () => {
+    if (rating === 0) return;
+    
+    setIsSubmittingRating(true);
+    try {
+      await onRate(recipe.id, rating, comment);
+      setRating(0);
+      setComment("");
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+    }
+    setIsSubmittingRating(false);
+  };
+
+  const handleFollowClick = (e) => {
+    e.stopPropagation();
+    onFollowToggle(recipe.created_by);
+  };
+
+  const getIngredientAvailability = () => {
+    if (!userProducts || !recipe.ingredients) return [];
+    
+    return recipe.ingredients.map(ingredient => {
+      const isAvailable = userProducts.some(p => 
+        p.name.toLowerCase().includes(ingredient.name.toLowerCase()) ||
+        ingredient.name.toLowerCase().includes(p.name.toLowerCase())
+      );
+      return { ...ingredient, isAvailable };
+    });
+  };
+
+  const getYouTubeVideoId = (url) => {
+ 
