@@ -1,0 +1,74 @@
+{
+  "name": "Recipe",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Título de la receta"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descripción corta de la receta"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL de la imagen principal de la receta"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL del video de la receta (YouTube, Vimeo, etc.)"
+    },
+    "ingredients": {
+      "type": "array",
+      "description": "Lista de ingredientes necesarios",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "instructions": {
+      "type": "array",
+      "description": "Pasos de preparación",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prep_time": {
+      "type": "number",
+      "description": "Tiempo de preparación en minutos"
+    },
+    "cook_time": {
+      "type": "number",
+      "description": "Tiempo de cocción en minutos"
+    },
+    "servings": {
+      "type": "number",
+      "description": "Número de porciones",
+      "default": 4
+    },
+    "calories_per_serving": {
+      "type": "number",
+      "description": "Calorías por porción"
+    },
+    "difficulty": {
+      "type": "string",
+      "description": "Dificultad de la receta",
+      "enum": [
+        "fácil",
+        "intermedio",
+        "difícil"
+      ],
+      "default": "fácil"
+    },
+ 

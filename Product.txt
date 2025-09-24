@@ -1,0 +1,74 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nombre del producto"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Cantidad disponible",
+      "default": 1
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unidad de medida",
+      "enum": [
+        "kg",
+        "g",
+        "l",
+        "ml",
+        "piezas",
+        "latas",
+        "paquetes"
+      ],
+      "default": "piezas"
+    },
+    "category": {
+      "type": "string",
+      "description": "Categoría del producto",
+      "enum": [
+        "frutas",
+        "verduras",
+        "carnes",
+        "pescados",
+        "lacteos",
+        "cereales",
+        "legumbres",
+        "especias",
+        "aceites",
+        "otros"
+      ],
+      "default": "otros"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de caducidad"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de compra"
+    },
+    "location": {
+      "type": "string",
+      "description": "Ubicación (despensa, nevera, congelador)",
+      "enum": [
+        "despensa",
+        "nevera",
+        "congelador"
+      ],
+      "default": "despensa"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notas adicionales"
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}

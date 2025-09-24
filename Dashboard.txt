@@ -1,0 +1,134 @@
+import React, { useState, useEffect } from "react";
+import { Product, Recipe, User } from "@/entities/all";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { 
+  Camera, 
+  Package, 
+  ChefHat, 
+  Users, 
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+  Star,
+  Plus
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { format, isAfter, addDays } from "date-fns";
+import { es } from "date-fns/locale";
+
+import QuickActions from "../components/dashboard/QuickActions";
+import ProductExpiry from "../components/dashboard/ProductExpiry";
+import RecentRecipes from "../components/dashboard/RecentRecipes";
+import PantryStats from "../components/dashboard/PantryStats";
+
+export default function Dashboard() {
+  const [products, setProducts] = useState([]);
+  const [recipes, setRecipes] = useState([]);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const [productsData, recipesData, userData] = await Promise.all([
+        Product.filter({ created_by: (await User.me()).email }, "-created_date", 20),
+        Recipe.list("-created_date", 6),
+        User.me()
+      ]);
+      
+      setProducts(productsData);
+      setRecipes(recipesData);
+      setUser(userData);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const getExpiringProducts = () => {
+    const today = new Date();
+    const threeDaysFromNow = addDays(today, 3);
+    
+    return products.filter(product => {
+      if (!product.expiry_date) return false;
+      const expiryDate = new Date(product.expiry_date);
+      return isAfter(expiryDate, today) && !isAfter(expiryDate, threeDaysFromNow);
+    });
+  };
+
+  const getCategoryStats = () => {
+    const categoryCount = {};
+    products.forEach(product => {
+      categoryCount[product.category] = (categoryCount[product.category] || 0) + 1;
+    });
+    return Object.entries(categoryCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header de Bienvenida */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                ¡Hola, {user?.full_name?.split(' ')[0] || 'Chef'}! 👋
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Tienes <span className="font-semibold text-emerald-600">{products.length} productos</span> en tu despensa
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Link to={createPageUrl("ScanTicket")}>
+                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Escanear Ticket
+                </Button>
+              </Link>
+              <Link to={createPageUrl("MyPantry")}>
+                <Button variant="outline" className="border-green-200 hover:bg-green-50">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Añadir Producto
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones Rápidas */}
+        <QuickActions />
+
+        {/* Estadísticas y Alertas */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2">
+            <PantryStats 
+              products={products}
+              categories={getCategoryStats()}
+              isLoading={isLoading}
+            />
+          </div>
+          <div>
+            <ProductExpiry 
+              expiringProducts={getExpiringProducts()}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+
+        {/* Recetas Recientes */}
+        <RecentRecipes 
+          recipes={recipes}
+          isLoading={isLoading}
+        />
+      </div>
+    </div>
+  );
+}

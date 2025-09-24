@@ -1,0 +1,74 @@
+
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Plus, X, Save, Trash2, Upload, Image, Video, Eye } from "lucide-react";
+import { motion } from "framer-motion";
+import { UploadFile } from "@/integrations/Core";
+import DespensaLogo from "../ui/DespensaLogo"; // Added DespensaLogo import
+
+const CATEGORIES = [
+  { value: "desayuno", label: "Desayuno", emoji: "🌅" },
+  { value: "almuerzo", label: "Almuerzo", emoji: "☀️" },
+  { value: "cena", label: "Cena", emoji: "🌙" },
+  { value: "postre", label: "Postre", emoji: "🍰" },
+  { value: "snack", label: "Snack", emoji: "🥨" },
+  { value: "bebida", label: "Bebida", emoji: "🥤" }
+];
+
+const DIFFICULTIES = [
+  { value: "fácil", label: "Fácil" },
+  { value: "intermedio", label: "Intermedio" },
+  { value: "difícil", label: "Difícil" }
+];
+
+const PREFERENCES = [
+  { value: "fat", label: "Fat", emoji: "🤤" },
+  { value: "fit", label: "Fit", emoji: "💪" }
+];
+
+const COMMON_TAGS = [
+  "saludable", "vegetariano", "vegano", "rápido", "económico",
+  "sin gluten", "keto", "bajo en calorías", "familiar", "festivo"
+];
+
+export default function CreateRecipeForm({ onSubmit, onCancel, initialData = {} }) {
+  // Initialize formData with default values and merge initialData.
+  // Using a function for useState ensures lazy initialization, good for performance.
+  const [formData, setFormData] = useState(() => ({
+    title: initialData.title || "",
+    description: initialData.description || "",
+    image_url: initialData.image_url || "",
+    video_url: initialData.video_url || "",
+    ingredients: initialData.ingredients && initialData.ingredients.length > 0 ? initialData.ingredients : [{ name: "", quantity: "", optional: false }],
+    instructions: initialData.instructions && initialData.instructions.length > 0 ? initialData.instructions : [""],
+    prep_time: initialData.prep_time || "",
+    cook_time: initialData.cook_time || "",
+    servings: initialData.servings || "",
+    calories_per_serving: initialData.calories_per_serving || "",
+    difficulty: initialData.difficulty || "fácil",
+    category: initialData.category || "almuerzo",
+    preference: initialData.preference || "fat",
+    tags: initialData.tags || [],
+    id: initialData.id || undefined // Preserve id for editing context
+  }));
+
+  const [customTag, setCustomTag] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+
+  // Effect to re-initialize formData and other related states when initialData prop changes.
+  // This is crucial for correctly handling scenarios where the component might receive new
+  // `initialData` (e.g., when editing a different recipe without remounting the component),
+  // ensuring the form reflects the latest data.
+  useEffect(() => {
+    setFormData({
+      title: initialData.title || "",
+      description: initialData.description || "",
+ 

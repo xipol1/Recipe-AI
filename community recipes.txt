@@ -1,0 +1,276 @@
+
+import React, { useState, useEffect, useCallback } from "react";
+import { Recipe, RecipeRating, User, Product, Follow } from "@/entities/all";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Search, Heart, Plus, TrendingUp, Rss } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import DespensaLogo from "../components/ui/DespensaLogo"; // Added DespensaLogo import
+
+import CommunityRecipeCard from "../components/community/CommunityRecipeCard";
+import RecipeModal from "../components/community/RecipeModal";
+import CreateRecipeForm from "../components/community/CreateRecipeForm";
+import RecommendedRecipes from "../components/community/RecommendedRecipes";
+
+const CATEGORIES = [
+  { value: "todos", label: "Todas las categorías" },
+  { value: "desayuno", label: "Desayuno" },
+  { value: "almuerzo", label: "Almuerzo" },
+  { value: "cena", label: "Cena" },
+  { value: "postre", label: "Postre" },
+  { value: "snack", label: "Snack" },
+  { value: "bebida", label: "Bebida" }
+];
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "Más recientes" },
+  { value: "rating", label: "Mejor calificadas" },
+  { value: "popular", label: "Más populares" }
+];
+
+export default function CommunityRecipes() {
+  const [recipes, setRecipes] = useState([]);
+  const [followingRecipes, setFollowingRecipes] = useState([]);
+  const [filteredRecipes, setFilteredRecipes] = useState([]);
+  const [user, setUser] = useState(null);
+  const [userProducts, setUserProducts] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("todos");
+  const [sortBy, setSortBy] = useState("recent");
+  const [activeTab, setActiveTab] = useState("following");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadInitialData = async () => {
+    setIsLoading(true);
+    try {
+      const currentUser = await User.me();
+      setUser(currentUser);
+      
+      const [allRecipes, productsData, followingData] = await Promise.all([
+        Recipe.list("-created_date", 100),
+        Product.filter({ created_by: currentUser.email }),
+        Follow.filter({ follower_email: currentUser.email })
+      ]);
+      
+      setRecipes(allRecipes);
+      setUserProducts(productsData);
+      setFollowing(followingData.map(f => f.following_email));
+      
+    } catch (error) {
+      console.error("Error loading initial data:", error);
+    }
+    setIsLoading(false);
+  };
+  
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const filterAndSortRecipes = useCallback(() => {
+    let sourceRecipes = activeTab === 'following' ? followingRecipes : recipes;
+    let filtered = [...sourceRecipes];
+
+    if (activeTab === 'explore') {
+        if (searchTerm) filtered = filtered.filter(r => r.title.toLowerCase().includes(searchTerm.toLowerCase()));
+        if (categoryFilter !== "todos") filtered = filtered.filter(r => r.category === categoryFilter);
+        filtered.sort((a, b) => {
+          if (sortBy === "rating") return (b.rating_average || 0) - (a.rating_average || 0);
+          if (sortBy === "popular") return (b.rating_count || 0) - (a.rating_count || 0);
+          return new Date(b.created_date) - new Date(a.created_date);
+        });
+    }
+
+    setFilteredRecipes(filtered);
+  }, [recipes, followingRecipes, searchTerm, categoryFilter, sortBy, activeTab]);
+
+  useEffect(() => {
+    const followingEmails = following.map(f => f.following_email || f);
+    const feed = recipes.filter(r => followingEmails.includes(r.created_by));
+    feed.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    setFollowingRecipes(feed);
+  }, [recipes, following]);
+
+  useEffect(() => {
+    filterAndSortRecipes();
+  }, [filterAndSortRecipes]);
+  
+  const handleFollowToggle = async (targetEmail) => {
+    if (!user || !targetEmail) {
+      console.error('Missing user or targetEmail for follow toggle');
+      return;
+    }
+    
+    console.log('handleFollowToggle called with:', { targetEmail, currentUser: user.email });
+    
+    const isFollowing = following.includes(targetEmail);
+    
+    try {
+      if (isFollowing) {
+        const followRecord = await Follow.filter({ follower_email: user.email, following_email: targetEmail });
+        if(followRecord.length > 0) {
+          await Follow.delete(followRecord[0].id);
+        }
+        setFollowing(prev => prev.filter(email => email !== targetEmail));
+        console.log('Unfollowed:', targetEmail);
+      } else {
+        await Follow.create({ follower_email: user.email, following_email: targetEmail });
+        setFollowing(prev => [...prev, targetEmail]);
+        console.log('Followed:', targetEmail);
+      }
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+    }
+  };
+
+  const handleCreateRecipe = async (recipeData) => {
+    try {
+      await Recipe.create(recipeData);
+      setShowCreateForm(false);
+      loadInitialData();
+    } catch (error) {
+      console.error("Error creating recipe:", error);
+    }
+  };
+
+  const handleRateRecipe = async (recipeId, rating, comment) => {
+    try {
+      await RecipeRating.create({ recipe_id: recipeId, rating, comment });
+      const ratings = await RecipeRating.filter({ recipe_id: recipeId });
+      const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+      await Recipe.update(recipeId, { rating_average: avgRating, rating_count: ratings.length });
+      
+      const updateRecipeInState = (state) => state.map(r => r.id === recipeId ? {...r, rating_average: avgRating, rating_count: ratings.length} : r);
+      setRecipes(updateRecipeInState);
+    } catch (error) {
+      console.error("Error rating recipe:", error);
+    }
+  };
+
+  const getRecommendedRecipes = () => {
+    if (userProducts.length === 0) return [];
+    const userIngredients = userProducts.map(p => p.name.toLowerCase());
+    return recipes
+      .map(recipe => {
+        const recipeIngredients = recipe.ingredients?.map(ing => ing.name.toLowerCase()) || [];
+        const matches = recipeIngredients.filter(ing => userIngredients.some(uIng => ing.includes(uIng) || uIng.includes(ing))).length;
+        return { ...recipe, matchCount: matches };
+      })
+      .filter(recipe => recipe.matchCount > 0 && !following.includes(recipe.created_by))
+      .sort((a, b) => b.matchCount - a.matchCount)
+      .slice(0, 9);
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <div className="grid grid-cols-1 md:cols-2 lg:grid-cols-3 gap-6"><div className="h-80 bg-gray-200 rounded-xl animate-pulse" /><div className="h-80 bg-gray-200 rounded-xl animate-pulse" /><div className="h-80 bg-gray-200 rounded-xl animate-pulse" /></div>;
+    }
+    
+    let itemsToRender = [];
+    if (activeTab === 'following') itemsToRender = followingRecipes;
+    else if (activeTab === 'explore') itemsToRender = filteredRecipes;
+
+    if (activeTab === 'following' && itemsToRender.length === 0) {
+      return (
+        <div className="text-center py-16">
+          <Rss className="w-16 h-16 text-gray-300 mx-auto mb-6" />
+          <h3 className="text-2xl font-semibold text-gray-800">Tu feed está vacío</h3>
+          <p className="text-gray-500 mt-2 mb-6">Empieza a seguir a otros chefs para ver sus recetas aquí.</p>
+          <Button onClick={() => setActiveTab('explore')}>Explorar recetas</Button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'recommended') {
+        return <RecommendedRecipes recipes={getRecommendedRecipes()} userProducts={userProducts} onRecipeClick={setSelectedRecipe} />;
+    }
+
+    return (
+      <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+        <AnimatePresence>
+          {itemsToRender.map((recipe) => (
+            <div key={recipe.id} className="break-inside-avoid">
+              <CommunityRecipeCard 
+                recipe={recipe} 
+                userProducts={userProducts} 
+                onClick={() => setSelectedRecipe(recipe)}
+                onFollowToggle={handleFollowToggle}
+                followingList={following}
+                currentUserEmail={user?.email}
+              />
+            </div>
+          ))}
+        </AnimatePresence>
+      </div>
+    );
+  };
+  
+  return (
+    <div className="min-h-screen p-0 md:p-8 md:bg-gradient-to-br md:from-orange-50 md:via-white md:to-red-50">
+      <div className="max-w-7xl mx-auto">
+        <div className="hidden md:flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center"><Users className="w-6 h-6 text-white" /></div>
+              Comunidad Culinaria
+            </h1>
+            <p className="text-gray-600 text-lg">Descubre, sigue y comparte</p>
+          </div>
+          <Button onClick={() => setShowCreateForm(true)} className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg">
+            <DespensaLogo className="w-4 h-4 mr-2" />Crear Receta
+          </Button>
+        </div>
+
+        <div className="px-4 md:px-0">
+          <div className="flex gap-2 md:gap-4 mb-8 border-b md:border-b-0">
+            <Button variant="ghost" onClick={() => setActiveTab("following")} className={`flex-1 md:flex-none rounded-none md:rounded-md ${activeTab === "following" ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>
+              <Heart className="w-4 h-4 mr-2" />Siguiendo
+            </Button>
+            <Button variant="ghost" onClick={() => setActiveTab("explore")} className={`flex-1 md:flex-none rounded-none md:rounded-md ${activeTab === "explore" ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>
+              <Search className="w-4 h-4 mr-2" />Explorar
+            </Button>
+            <Button variant="ghost" onClick={() => setActiveTab("recommended")} className={`flex-1 md:flex-none rounded-none md:rounded-md ${activeTab === "recommended" ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>
+              <TrendingUp className="w-4 h-4 mr-2" />Para Ti
+            </Button>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {showCreateForm && (
+            <CreateRecipeForm onSubmit={handleCreateRecipe} onCancel={() => setShowCreateForm(false)} />
+          )}
+        </AnimatePresence>
+
+        <div className="px-4 md:px-0">
+          {activeTab === 'explore' && (
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+              <div className="flex-1"><Input placeholder="Buscar recetas..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-10" /></div>
+              <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select>
+                <Select value={sortBy} onValueChange={setSortBy}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select>
+              </div>
+            </div>
+          )}
+          {renderContent()}
+        </div>
+        
+        <Button onClick={() => setShowCreateForm(true)} className="md:hidden bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg fixed bottom-20 right-4 z-40 rounded-full h-14 w-14">
+          <DespensaLogo className="w-6 h-6" />
+        </Button>
+
+        {selectedRecipe && <RecipeModal 
+            recipe={selectedRecipe} 
+            userProducts={userProducts} 
+            onClose={() => setSelectedRecipe(null)} 
+            onRate={handleRateRecipe} 
+            onFollowToggle={handleFollowToggle}
+            followingList={following}
+            currentUserEmail={user?.email}
+        />}
+      </div>
+    </div>
+  );
+}

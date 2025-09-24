@@ -1,0 +1,74 @@
+
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Save, X, Clock, Users, ChefHat, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
+
+export default function GeneratedRecipeCard({ recipe, onSave, onDiscard }) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await onSave();
+    setIsSaving(false);
+  };
+
+  // Función para determinar el color de las calorías
+  const getCaloriesBadgeColor = (calories) => {
+    if (!calories) return "bg-gray-100 text-gray-800";
+    if (calories <= 300) return "bg-green-100 text-green-800";
+    if (calories <= 500) return "bg-yellow-100 text-yellow-800";
+    if (calories <= 700) return "bg-orange-100 text-orange-800";
+    return "bg-red-100 text-red-800";
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="sticky top-4"
+    >
+      <Card className="shadow-2xl border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 overflow-hidden">
+        {/* Header mágico */}
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-1">
+          <CardHeader className="bg-white/90 backdrop-blur-sm rounded-t-lg m-1">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                Receta Generada por IA
+              </CardTitle>
+              <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200">
+                ✨ Nueva
+              </Badge>
+            </div>
+          </CardHeader>
+        </div>
+
+        <CardContent className="p-6">
+          {/* Título y descripción */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              {recipe.title}
+            </h2>
+            <p className="text-gray-700 leading-relaxed">
+              {recipe.description}
+            </p>
+          </div>
+
+          {/* Info rápida */}
+          <div className="flex items-center gap-6 mb-6 text-sm text-gray-600 flex-wrap">
+            {recipe.prep_time && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4 text-blue-500" />
+                <span>{recipe.prep_time} min</span>
+              </div>
+            )}
+            {recipe.cook_time && (
+              <div className="flex items-center gap-1">
+                <ChefHat className="w-4 h-4 text-orange-500" />
+                <span>{recipe.cook_time} min cocción</span>
+ 

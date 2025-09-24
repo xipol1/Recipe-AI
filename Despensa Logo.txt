@@ -1,0 +1,93 @@
+import React from "react";
+
+export default function DespensaLogo({ className = "w-8 h-8", showText = false, textClassName = "" }) {
+  return (
+    <div className="flex items-center gap-2">
+      <svg
+        className={className}
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Fondo circular con gradiente */}
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="url(#gradientBg)"
+          stroke="url(#gradientBorder)"
+          strokeWidth="2"
+        />
+        
+        {/* Chef hat */}
+        <path
+          d="M35 42c0-8 6-15 15-15s15 7 15 15c3 0 5 2 5 5v3c0 3-2 5-5 5H35c-3 0-5-2-5-5v-3c0-3 2-5 5-5z"
+          fill="white"
+          stroke="#10B981"
+          strokeWidth="1.5"
+        />
+        
+        {/* Chef hat band */}
+        <rect
+          x="32"
+          y="47"
+          width="36"
+          height="4"
+          rx="2"
+          fill="#10B981"
+        />
+        
+        {/* Sparkles para IA */}
+        <g fill="#F59E0B">
+          <circle cx="25" cy="30" r="1.5" />
+          <circle cx="75" cy="35" r="1" />
+          <circle cx="70" cy="25" r="1.5" />
+          <path d="M22 25L24 27L22 29L20 27Z" />
+          <path d="M78 28L80 30L78 32L76 30Z" />
+        </g>
+        
+        {/* Pantry/despensa icon */}
+        <rect
+          x="38"
+          y="58"
+          width="24"
+          height="16"
+          rx="2"
+          fill="none"
+          stroke="#10B981"
+          strokeWidth="2"
+        />
+        
+        {/* Shelves */}
+        <line x1="40" y1="63" x2="60" y2="63" stroke="#10B981" strokeWidth="1.5" />
+        <line x1="40" y1="68" x2="60" y2="68" stroke="#10B981" strokeWidth="1.5" />
+        
+        {/* Items on shelves */}
+        <circle cx="44" cy="60.5" r="1.5" fill="#F59E0B" />
+        <circle cx="56" cy="60.5" r="1.5" fill="#EF4444" />
+        <rect x="42" y="65" width="3" height="2" rx="0.5" fill="#8B5CF6" />
+        <rect x="52" y="65" width="3" height="2" rx="0.5" fill="#06B6D4" />
+        <circle cx="48" cy="71" r="1" fill="#F97316" />
+        
+        {/* Gradients definition */}
+        <defs>
+          <linearGradient id="gradientBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#D1FAE5" />
+            <stop offset="100%" stopColor="#A7F3D0" />
+          </linearGradient>
+          <linearGradient id="gradientBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#10B981" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+        </defs>
+      </svg>
+      
+      {showText && (
+        <div className={`flex flex-col ${textClassName}`}>
+          <span className="font-bold text-lg text-gray-900">DespensaIA</span>
+          <span className="text-sm text-green-600 font-medium">Tu cocina inteligente</span>
+        </div>
+      )}
+    </div>
+  );
+}

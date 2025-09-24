@@ -1,0 +1,155 @@
+import React, { useState, useCallback } from "react";
+import { Product } from "@/entities/all";
+import { ExtractDataFromUploadedFile, UploadFile } from "@/integrations/Core";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, ArrowLeft, CheckCircle, Camera } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { motion, AnimatePresence } from "framer-motion";
+
+import TicketUploadZone from "../components/scan/TicketUploadZone";
+import ProductList from "../components/scan/ProductList";
+import ProcessingStatus from "../components/scan/ProcessingStatus";
+
+export default function ScanTicket() {
+  const navigate = useNavigate();
+  const [file, setFile] = useState(null);
+  const [extractedProducts, setExtractedProducts] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [processingStep, setProcessingStep] = useState(0);
+
+  const handleFileSelect = useCallback((selectedFile) => {
+    setFile(selectedFile);
+    setExtractedProducts([]);
+    setError(null);
+    setSuccess(false);
+  }, []);
+
+  const processTicket = async () => {
+    if (!file) return;
+    
+    setIsProcessing(true);
+    setProcessingStep(0);
+    setError(null);
+
+    try {
+      setProcessingStep(1);
+      const { file_url } = await UploadFile({ file });
+      
+      setProcessingStep(2);
+      const productSchema = {
+        type: "object",
+        properties: { products: { type: "array", items: { type: "object", properties: { name: { type: "string" }, quantity: { type: "number", default: 1 }, unit: { type: "string", default: "piezas" }, category: { type: "string", default: "otros" } } } } }
+      };
+
+      const result = await ExtractDataFromUploadedFile({ file_url, json_schema: productSchema });
+
+      if (result.status === "success" && result.output?.products) {
+        setExtractedProducts(result.output.products);
+        setProcessingStep(3);
+      } else {
+        throw new Error(result.details || "No se pudieron extraer productos del ticket");
+      }
+    } catch (error) {
+      setError(`Error procesando el ticket: ${error.message}`);
+      console.error("Error processing ticket:", error);
+    }
+    
+    setIsProcessing(false);
+  };
+
+  const saveProductsToDatabase = async (products) => {
+    try {
+      setIsProcessing(true);
+      const today = new Date().toISOString().split('T')[0];
+      
+      const productsToSave = products.map(product => ({
+        ...product,
+        purchase_date: today,
+        location: "despensa"
+      }));
+
+      await Product.bulkCreate(productsToSave);
+      setSuccess(true);
+      
+      setTimeout(() => {
+        navigate(createPageUrl("MyPantry"));
+      }, 2000);
+    } catch (error) {
+      setError("Error guardando productos. Inténtalo de nuevo.");
+    }
+    setIsProcessing(false);
+  };
+
+  const handleProductUpdate = (index, updatedProduct) => {
+    const newProducts = [...extractedProducts];
+    newProducts[index] = updatedProduct;
+    setExtractedProducts(newProducts);
+  };
+
+  const handleProductRemove = (index) => {
+    setExtractedProducts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="min-h-screen p-0 md:p-8 md:bg-gradient-to-br md:from-blue-50 md:via-white md:to-green-50">
+      <div className="max-w-4xl mx-auto">
+        <div className="hidden md:flex items-center gap-4 mb-8">
+          <Button variant="outline" size="icon" onClick={() => navigate(createPageUrl("Dashboard"))} className="hover:bg-blue-50">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Escanear Ticket</h1>
+            <p className="text-gray-600 mt-1">Sube una foto de tu ticket para añadir productos automáticamente</p>
+          </div>
+        </div>
+
+        <div className="px-4 md:px-0">
+            <AnimatePresence>
+              {error && (
+                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="mb-6">
+                  <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>
+                </motion.div>
+              )}
+              {success && (
+                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="mb-6">
+                  <Alert className="bg-green-50 border-green-200"><CheckCircle className="h-4 w-4 text-green-600" /><AlertDescription className="text-green-800">¡Productos guardados! Redirigiendo a tu despensa...</AlertDescription></Alert>
+                </motion.div>
+              )}
+            </AnimatePresence>
+    
+            <div className="space-y-6">
+              {!extractedProducts.length && (
+                <Card className="shadow-lg border-0">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Camera className="w-6 h-6 text-blue-600" />
+                      Subir Ticket de Compra
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <TicketUploadZone onFileSelect={handleFileSelect} selectedFile={file} />
+                    {file && !isProcessing && (
+                      <div className="mt-6 flex justify-center">
+                        <Button onClick={processTicket} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg px-8">Procesar Ticket</Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+    
+              {isProcessing && <ProcessingStatus step={processingStep} isProcessing={isProcessing} />}
+    
+              {extractedProducts.length > 0 && !isProcessing && (
+                <ProductList products={extractedProducts} onProductUpdate={handleProductUpdate} onProductRemove={handleProductRemove} onSaveAll={saveProductsToDatabase} isLoading={isProcessing} />
+              )}
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+}

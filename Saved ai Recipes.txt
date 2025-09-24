@@ -1,0 +1,74 @@
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Clock, Users, ChefHat, Star } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+export default function SavedAIRecipes({ recipes }) {
+  if (recipes.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Sparkles className="w-12 h-12 text-purple-600" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          Aún no has guardado recetas de IA
+        </h3>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          Genera tu primera receta personalizada con los ingredientes de tu despensa.
+        </p>
+        <p className="text-sm text-gray-500">
+          Las recetas generadas por IA aparecerán aquí para que puedas acceder a ellas cuando quieras.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <AnimatePresence>
+        {recipes.map((recipe, index) => (
+          <motion.div
+            key={recipe.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30">
+              {/* Header con gradiente mágico */}
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-t-lg">
+                <div className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    <span className="font-medium text-sm">Receta IA</span>
+                  </div>
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    {format(new Date(recipe.created_date), "d MMM", { locale: es })}
+                  </Badge>
+                </div>
+              </div>
+
+              <CardContent className="p-6">
+                {/* Título */}
+                <h3 className="font-bold text-xl text-gray-900 mb-3 group-hover:text-purple-700 transition-colors line-clamp-2">
+                  {recipe.title}
+                </h3>
+
+                {/* Descripción */}
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  {recipe.description}
+                </p>
+
+                {/* Estadísticas */}
+                <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
+                  {recipe.prep_time && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      <span>{recipe.prep_time}m</span>
+                    </div>
+                  )}
+                  {recipe.cook_time && (
+                    <div className="flex items-center gap-1">
+ 

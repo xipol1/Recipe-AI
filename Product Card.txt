@@ -1,0 +1,68 @@
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Package, Calendar, MapPin } from "lucide-react";
+import { format, isAfter, differenceInDays } from "date-fns";
+import { es } from "date-fns/locale";
+import { motion } from "framer-motion";
+
+const CATEGORY_COLORS = {
+  frutas: "bg-red-100 text-red-800 border-red-200",
+  verduras: "bg-green-100 text-green-800 border-green-200",
+  carnes: "bg-pink-100 text-pink-800 border-pink-200",
+  pescados: "bg-blue-100 text-blue-800 border-blue-200",
+  lacteos: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  cereales: "bg-orange-100 text-orange-800 border-orange-200",
+  legumbres: "bg-purple-100 text-purple-800 border-purple-200",
+  especias: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  aceites: "bg-amber-100 text-amber-800 border-amber-200",
+  otros: "bg-gray-100 text-gray-800 border-gray-200"
+};
+
+const LOCATION_ICONS = {
+  despensa: "🏪",
+  nevera: "❄️", 
+  congelador: "🧊"
+};
+
+export default function ProductCard({ product, onEdit, onDelete }) {
+  const getExpiryStatus = () => {
+    if (!product.expiry_date) return null;
+    
+    const today = new Date();
+    const expiryDate = new Date(product.expiry_date);
+    const daysLeft = differenceInDays(expiryDate, today);
+    
+    if (daysLeft < 0) return { status: 'expired', label: 'Vencido', color: 'bg-red-500' };
+    if (daysLeft <= 1) return { status: 'critical', label: daysLeft === 0 ? 'Vence hoy' : '1 día', color: 'bg-orange-500' };
+    if (daysLeft <= 3) return { status: 'warning', label: `${daysLeft} días`, color: 'bg-yellow-500' };
+    return { status: 'good', label: `${daysLeft} días`, color: 'bg-green-500' };
+  };
+
+  const expiryStatus = getExpiryStatus();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-white">
+        <CardContent className="p-4">
+          {/* Header con acciones */}
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-gray-900 line-clamp-2">
+                {product.name}
+              </h3>
+            </div>
+            <div className="flex gap-1 ml-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(product)}
+                className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-50"
+ 

@@ -1,0 +1,68 @@
+
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Package, Camera, Search } from "lucide-react"; // Removed Plus as it's replaced
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import DespensaLogo from "../ui/DespensaLogo"; // Added DespensaLogo import
+
+export default function EmptyState({ hasProducts, onAddProduct }) {
+  if (hasProducts) {
+    // Cuando hay productos pero el filtro no muestra ninguno
+    return (
+      <div className="text-center py-16">
+        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Search className="w-12 h-12 text-gray-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          No se encontraron productos
+        </h3>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          Intenta cambiar los filtros o términos de búsqueda para encontrar lo que buscas.
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => {
+            // Reset filters logic would go here
+            window.location.reload();
+          }}
+        >
+          Limpiar Filtros
+        </Button>
+      </div>
+    );
+  }
+
+  // Cuando no hay productos en absoluto
+  return (
+    <div className="text-center py-16">
+      <div className="w-32 h-32 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8">
+        <Package className="w-16 h-16 text-green-600" />
+      </div>
+      
+      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+        ¡Tu despensa está vacía!
+      </h3>
+      <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
+        Comienza añadiendo productos para gestionar tu despensa de manera inteligente.
+      </p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto mb-8">
+        <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+          <Link to={createPageUrl("ScanTicket")}>
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <Camera className="w-6 h-6 text-blue-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Escanear Ticket</h4>
+              <p className="text-sm text-gray-600">Añade productos automáticamente</p>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={onAddProduct}>
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+              <DespensaLogo className="w-6 h-6 text-green-600" /> {/* Replaced Plus with DespensaLogo */}
+ 

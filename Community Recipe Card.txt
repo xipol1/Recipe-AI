@@ -1,0 +1,74 @@
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Clock, Users, ChefHat, Star, Heart, Plus, Play } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { motion } from "framer-motion";
+
+const CATEGORY_COLORS = {
+  desayuno: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  almuerzo: "bg-blue-100 text-blue-800 border-blue-200",
+  cena: "bg-purple-100 text-purple-800 border-purple-200",
+  postre: "bg-pink-100 text-pink-800 border-pink-200",
+  snack: "bg-green-100 text-green-800 border-green-200",
+  bebida: "bg-cyan-100 text-cyan-800 border-cyan-200"
+};
+
+export default function CommunityRecipeCard({ recipe, userProducts, onClick, onFollowToggle, followingList = [], currentUserEmail }) {
+  const isFollowing = followingList?.includes(recipe.created_by);
+  const isOwnRecipe = currentUserEmail === recipe.created_by;
+
+  const handleFollowClick = (e) => {
+    e.stopPropagation();
+    console.log('Follow button clicked', { isOwnRecipe, onFollowToggle: typeof onFollowToggle });
+    if (onFollowToggle && typeof onFollowToggle === 'function' && !isOwnRecipe) {
+      onFollowToggle(recipe.created_by);
+    }
+  };
+  
+  const getAvailableIngredients = () => {
+    if (!recipe.ingredients || !userProducts) return 0;
+    const userIngredientNames = userProducts.map(p => p.name.toLowerCase());
+    return recipe.ingredients.filter(ingredient => 
+      userIngredientNames.some(userIng => 
+        ingredient.name.toLowerCase().includes(userIng) || 
+        userIng.includes(ingredient.name.toLowerCase())
+      )
+    ).length;
+  };
+
+  const availableIngredients = getAvailableIngredients();
+  const totalIngredients = recipe.ingredients?.length || 0;
+  const matchPercentage = totalIngredients > 0 ? Math.round((availableIngredients / totalIngredients) * 100) : 0;
+
+  const getCaloriesBadgeColor = (calories) => {
+    if (!calories) return "bg-gray-100 text-gray-800";
+    if (calories <= 300) return "bg-green-100 text-green-800 border-green-200";
+    if (calories <= 500) return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    if (calories <= 700) return "bg-orange-100 text-orange-800 border-orange-200";
+    return "bg-red-100 text-red-800 border-red-200";
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className="cursor-pointer"
+      onClick={() => onClick(recipe)}
+    >
+      <Card className="group hover:shadow-xl transition-shadow duration-300 border-0 shadow-md bg-white overflow-hidden h-full flex flex-col">
+        {/* Imagen principal */}
+        {recipe.image_url && (
+          <div className="relative h-48 md:h-56 overflow-hidden">
+            <img
+              src={recipe.image_url}
+              alt={recipe.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            
+            {/* Overlay con información */}
+ 
