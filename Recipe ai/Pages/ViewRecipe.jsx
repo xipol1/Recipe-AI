@@ -165,40 +165,44 @@ export default function ViewRecipe() {
         </div>
         
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            {/* Imagen o Video Principal */}
-            {(recipe.image_url || recipe.video_url) && (
+            {/* Media Principal: Video priorizado sobre imagen */}
+            {(recipe.video_url || recipe.image_url) && (
               <div className="relative h-64 md:h-80 overflow-hidden">
-                {recipe.image_url && (
-                  <img
-                    src={recipe.image_url}
-                    alt={recipe.title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                {recipe.video_url && youtubeVideoId && (
-                  <div className="absolute inset-0">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${youtubeVideoId}`}
-                      className="w-full h-full"
-                      frameBorder="0"
-                      allowFullScreen
-                      title="Video de la receta"
-                      referrerPolicy="strict-origin-when-cross-origin" // Added for security/compatibility
+                {recipe.video_url ? (
+                  <>
+                    {youtubeVideoId ? (
+                      <div className="absolute inset-0">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allowFullScreen
+                          title="Video de la receta"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                        />
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                        <a
+                          href={recipe.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          <Play className="w-5 h-5" />
+                          Ver Video
+                        </a>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  recipe.image_url && (
+                    <img
+                      src={recipe.image_url}
+                      alt={recipe.title}
+                      className="w-full h-full object-cover"
                     />
-                  </div>
-                )}
-                {recipe.video_url && !youtubeVideoId && (
-                  <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                    <a
-                      href={recipe.video_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      <Play className="w-5 h-5" />
-                      Ver Video
-                    </a>
-                  </div>
+                  )
                 )}
               </div>
             )}
