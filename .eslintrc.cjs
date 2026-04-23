@@ -23,5 +23,18 @@ module.exports = {
   ],
   rules: {
     'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'semi': 'off',
+    'no-trailing-spaces': 'off',
+    'comma-dangle': 'off',
+    'quotes': 'off',
+    'quote-props': 'off',
+    'space-before-function-paren': 'off',
+    'padded-blocks': 'off',
+    'multiline-ternary': 'off',
+    'operator-linebreak': 'off',
+    'prefer-const': 'off',
+    'no-multi-spaces': 'off',
+    'no-void': 'off',
+    'no-useless-escape': 'off'
   },
 }

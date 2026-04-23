@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Usuario = require('../models/Usuario');
 const config = require('../config/config');
 const emailService = require('../services/emailService');
+const { USER_ROLES } = require('../constants/enums');
 
 // Generar token JWT
 const generarToken = (userId) => {
@@ -15,6 +16,63 @@ const generarToken = (userId) => {
 // Generar refresh token
 const generarRefreshToken = () => {
   return crypto.randomBytes(40).toString('hex');
+};
+
+const formatearAuthData = (usuario, accessToken, refreshToken) => ({
+  user: {
+    id: usuario.id || usuario._id,
+    email: usuario.email,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
+    role: usuario.rol || usuario.role,
+    verificado: Boolean(usuario.verificacion?.emailVerificado ?? usuario.verificado),
+    avatar: usuario.avatar,
+    isDemo: Boolean(usuario.isDemo)
+  },
+  accessToken,
+  refreshToken
+});
+
+const crearSesionDemo = (email, password) => {
+  if (!config.auth.enableDemoUsers) return null;
+
+  if (email === config.auth.demoUserEmail && password === config.auth.demoUserPassword) {
+    const accessToken = jwt.sign(
+      { id: 'demo-advertiser', email: config.auth.demoUserEmail, role: 'advertiser', isDemo: true },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    );
+    const refreshToken = generarRefreshToken();
+    return formatearAuthData({
+      id: 'demo-advertiser',
+      email: config.auth.demoUserEmail,
+      nombre: 'Anunciante',
+      apellido: 'Demo',
+      role: 'advertiser',
+      verificado: true,
+      isDemo: true
+    }, accessToken, refreshToken);
+  }
+
+  if (email === config.auth.demoCreatorEmail && password === config.auth.demoCreatorPassword) {
+    const accessToken = jwt.sign(
+      { id: 'demo-creator', email: config.auth.demoCreatorEmail, role: 'creator', isDemo: true },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    );
+    const refreshToken = generarRefreshToken();
+    return formatearAuthData({
+      id: 'demo-creator',
+      email: config.auth.demoCreatorEmail,
+      nombre: 'Creador',
+      apellido: 'Demo',
+      role: 'creator',
+      verificado: true,
+      isDemo: true
+    }, accessToken, refreshToken);
+  }
+
+  return null;
 };
 
 // Registro de usuario
@@ -41,7 +99,7 @@ exports.registro = async (req, res) => {
     }
 
     // Validar rol
-    if (!['creator', 'advertiser', 'admin'].includes(role)) {
+    if (!USER_ROLES.includes(role)) {
       return res.status(400).json({
         success: false,
         message: 'Rol inválido'
@@ -97,19 +155,7 @@ exports.registro = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Usuario registrado exitosamente. Revisa tu email para verificar tu cuenta.',
-      token,
-      data: {
-        user: {
-          id: nuevoUsuario._id,
-          email: nuevoUsuario.email,
-          nombre: nuevoUsuario.nombre,
-          apellido: nuevoUsuario.apellido,
-          role: nuevoUsuario.rol,
-          verificado: Boolean(nuevoUsuario.verificacion?.emailVerificado)
-        },
-        token,
-        refreshToken
-      }
+      data: formatearAuthData(nuevoUsuario, token, refreshToken)
     });
 
   } catch (error) {
@@ -128,53 +174,11 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     // Usuarios demo para acceso rápido (no requieren DB)
-    if (email === "demo@adflow.com" && password === "123456") {
-      const demoToken = jwt.sign(
-        { id: "demo-advertiser", email: "demo@adflow.com", role: "advertiser", isDemo: true },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn }
-      );
-      const demoRefreshToken = generarRefreshToken();
+    const sesionDemo = crearSesionDemo(email, password);
+    if (sesionDemo) {
       return res.json({
         success: true,
-        data: {
-          user: {
-            id: "demo-advertiser",
-            email: "demo@adflow.com",
-            nombre: "Anunciante",
-            apellido: "Demo",
-            role: "advertiser",
-            verificado: true,
-            isDemo: true
-          },
-          token: demoToken,
-          refreshToken: demoRefreshToken
-        }
-      });
-    }
-
-    if (email === "creator@adflow.com" && password === "123456") {
-      const demoToken = jwt.sign(
-        { id: "demo-creator", email: "creator@adflow.com", role: "creator", isDemo: true },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn }
-      );
-      const demoRefreshToken = generarRefreshToken();
-      return res.json({
-        success: true,
-        data: {
-          user: {
-            id: "demo-creator",
-            email: "creator@adflow.com",
-            nombre: "Creador",
-            apellido: "Demo",
-            role: "creator",
-            verificado: true,
-            isDemo: true
-          },
-          token: demoToken,
-          refreshToken: demoRefreshToken
-        }
+        data: sesionDemo
       });
     }
 
@@ -222,25 +226,37 @@ exports.login = async (req, res) => {
     res.json({
       success: true,
       message: 'Login exitoso',
-      token,
-      data: {
-        user: {
-          id: usuario._id,
-          email: usuario.email,
-          nombre: usuario.nombre,
-          apellido: usuario.apellido,
-          role: usuario.rol,
-          verificado: Boolean(usuario.verificacion?.emailVerificado),
-          avatar: usuario.avatar
-        },
-        token,
-        refreshToken
-      }
+      data: formatearAuthData(usuario, token, refreshToken)
     });
 
   } catch (error) {
     console.error('Error en login:', error);
     res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+exports.demoLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const sesionDemo = crearSesionDemo(email, password);
+
+    if (!sesionDemo) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciales demo inválidas o modo demo deshabilitado'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: sesionDemo
+    });
+  } catch (error) {
+    console.error('Error en demo login:', error);
+    return res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
     });
@@ -316,14 +332,27 @@ exports.refreshToken = async (req, res) => {
       });
     }
 
+    // Rotación de refresh token
+    const nuevoRefreshToken = generarRefreshToken();
+    usuario.refreshTokens = usuario.refreshTokens.map((tokenData) => {
+      if (tokenData.token === refreshToken) {
+        tokenData.activo = false;
+      }
+      return tokenData;
+    });
+    usuario.refreshTokens.push({
+      token: nuevoRefreshToken,
+      fechaCreacion: new Date(),
+      activo: true
+    });
+    await usuario.save();
+
     // Generar nuevo access token
     const nuevoToken = generarToken(usuario._id);
 
     res.json({
       success: true,
-      data: {
-        token: nuevoToken
-      }
+      data: formatearAuthData(usuario, nuevoToken, nuevoRefreshToken)
     });
 
   } catch (error) {

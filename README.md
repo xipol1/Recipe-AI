@@ -137,6 +137,13 @@ Una plataforma completa para la monetización de canales de comunicación como T
 ### Base de Datos
 La aplicación se conectará automáticamente a MongoDB usando la URI proporcionada en las variables de entorno.
 
+### Plantillas de entorno por ambiente
+- `.env.example` (base local)
+- `.env.staging.example` (staging)
+- `.env.production.example` (producción)
+
+Para despliegues, usa también `RELEASE_CHECKLIST.md` como guía operativa previa a publicar.
+
 ### Stripe
 1. Crear cuenta en [Stripe](https://stripe.com)
 2. Obtener las claves API desde el dashboard

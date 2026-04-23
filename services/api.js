@@ -136,8 +136,18 @@ class ApiService {
    * Cerrar sesión
    */
   async logout() {
+    const refreshToken = localStorage.getItem('refreshToken');
     return this.request('/auth/logout', {
       method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  async demoLogin(credentials) {
+    return this.request('/auth/demo-login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+      auth: false,
     });
   }
 
