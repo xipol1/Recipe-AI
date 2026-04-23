@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { AD_STATES } = require('../constants/enums');
 
 const anuncioSchema = new mongoose.Schema({
   // Información básica
@@ -151,7 +152,7 @@ const anuncioSchema = new mongoose.Schema({
   // Estado del anuncio
   estado: {
     type: String,
-    enum: ['borrador', 'pendiente_aprobacion', 'aprobado', 'rechazado', 'programado', 'activo', 'completado', 'cancelado'],
+    enum: AD_STATES,
     default: 'borrador'
   },
   

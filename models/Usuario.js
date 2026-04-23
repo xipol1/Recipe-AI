@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { USER_ROLES } = require('../constants/enums');
 
 const usuarioSchema = new mongoose.Schema({
   nombre: {
@@ -29,7 +30,7 @@ const usuarioSchema = new mongoose.Schema({
   },
   rol: {
     type: String,
-    enum: ['creator', 'advertiser', 'admin'],
+    enum: USER_ROLES,
     required: [true, 'El rol de usuario es obligatorio']
   },
   avatar: {

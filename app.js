@@ -47,9 +47,25 @@ app.use(helmet({
 }));
 
 // CORS configuración
+const corsOrigins = (process.env.CORS_ORIGINS || config.frontend.url || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 const corsOptions = {
-  origin: '*',
-  credentials: false,
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (config.server.environment === 'development' && corsOrigins.length === 0) {
+      return callback(null, true);
+    }
+    if (corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origen no permitido por CORS'));
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
@@ -68,7 +84,7 @@ const globalLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Rate limiting deshabilitado temporalmente
+app.use(globalLimiter);
 
 // Sanitización de datos
 app.use(mongoSanitize()); // Prevenir inyección NoSQL

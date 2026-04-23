@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const { validarCampos } = require('../middleware/validarCampos');
 const { autenticar } = require('../middleware/auth');
 const { limitarIntentos } = require('../middleware/rateLimiter');
+const { USER_ROLES } = require('../constants/enums');
 
 const router = express.Router();
 
@@ -33,8 +34,8 @@ const validacionesRegistro = [
     .isMobilePhone('any')
     .withMessage('Número de teléfono inválido'),
   body('role')
-    .isIn(['creator', 'advertiser'])
-    .withMessage('Rol inválido. Debe ser creator o advertiser'),
+    .isIn(USER_ROLES)
+    .withMessage('Rol inválido. Debe ser admin, advertiser o creator'),
   
   // Validaciones condicionales para perfil de creador
   body('perfilCreador.biografia')
@@ -158,7 +159,7 @@ const validacionesActualizarPerfil = [
 // Rate limiting específico para autenticación
 const limitarLogin = limitarIntentos({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 1000000,
+  max: 10,
   message: {
     success: false,
     message: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.'
@@ -169,7 +170,7 @@ const limitarLogin = limitarIntentos({
 
 const limitarRegistro = limitarIntentos({
   windowMs: 60 * 60 * 1000, // 1 hora
-  max: 1000000,
+  max: 20,
   message: {
     success: false,
     message: 'Demasiados registros desde esta IP. Intenta de nuevo en 1 hora.'
@@ -178,7 +179,7 @@ const limitarRegistro = limitarIntentos({
 
 const limitarRestablecimiento = limitarIntentos({
   windowMs: 60 * 60 * 1000, // 1 hora
-  max: 1000000,
+  max: 5,
   message: {
     success: false,
     message: 'Demasiadas solicitudes de restablecimiento. Intenta de nuevo en 1 hora.'
@@ -262,11 +263,24 @@ router.post('/login',
   authController.login
 );
 
+router.post('/demo-login',
+  limitarLogin,
+  validacionesLogin,
+  validarCampos,
+  authController.demoLogin
+);
+
 /**
  * @route   POST /api/auth/refresh-token
  * @desc    Refrescar token de acceso
  * @access  Público
  */
+router.post('/refresh',
+  body('refreshToken').notEmpty().withMessage('Refresh token requerido'),
+  validarCampos,
+  authController.refreshToken
+);
+
 router.post('/refresh-token',
   body('refreshToken').notEmpty().withMessage('Refresh token requerido'),
   validarCampos,

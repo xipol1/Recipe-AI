@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const storedUser = localStorage.getItem('user');
       const isDemo = localStorage.getItem('isDemo') === 'true';
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
       let parsedStoredUser = null;
       
       if (storedUser) {
@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }) => {
 
       if (!token) {
         localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
         setUser(null);
         setLoading(false);
         return;
@@ -72,11 +73,13 @@ export const AuthProvider = ({ children }) => {
       } else {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
         setUser(null);
       }
     } catch (error) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('refreshToken');
       setUser(null);
       setError(error.message);
     } finally {
@@ -96,7 +99,8 @@ export const AuthProvider = ({ children }) => {
       
       if (response.success) {
         let user = response.data?.user;
-        const token = response.data?.token;
+        const token = response.data?.accessToken || response.data?.token;
+        const refreshToken = response.data?.refreshToken;
 
         if (!user || !user.role) {
           throw new Error("Invalid user response from API");
@@ -112,6 +116,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('isDemo');
         localStorage.removeItem('role');
         localStorage.setItem('token', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(user));
         setUser(user);
         return { success: true, user };
@@ -155,13 +160,15 @@ export const AuthProvider = ({ children }) => {
       
       if (response.success) {
         const user = response.data?.user;
-        const token = response.data?.token;
+        const token = response.data?.accessToken || response.data?.token;
+        const refreshToken = response.data?.refreshToken;
 
         if (token && user) {
           if (!user.role) {
             throw new Error("Invalid user response from API");
           }
           localStorage.setItem('token', token);
+          if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
           localStorage.setItem('user', JSON.stringify(user));
           setUser(user);
         }
@@ -189,6 +196,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       localStorage.removeItem('isDemo');
       localStorage.removeItem('role');
+      localStorage.removeItem('refreshToken');
       setUser(null);
       setError(null);
     }

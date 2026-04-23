@@ -49,8 +49,8 @@ const config = {
   // CONFIGURACIÓN DE JWT
   // ==========================================
   jwt: {
-    secret: process.env.JWT_SECRET || 'tu_jwt_secret_muy_seguro_aqui',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'tu_jwt_refresh_secret_muy_seguro_aqui',
+    secret: process.env.JWT_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     issuer: process.env.JWT_ISSUER || 'plataforma-publicidad',
@@ -170,8 +170,18 @@ const config = {
   // ==========================================
   security: {
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS) || 12,
-    sessionSecret: process.env.SESSION_SECRET || 'tu_session_secret_muy_seguro_aqui',
-    encryptionKey: process.env.ENCRYPTION_KEY || 'tu_encryption_key_32_caracteres_aqui'
+    sessionSecret: process.env.SESSION_SECRET,
+    encryptionKey: process.env.ENCRYPTION_KEY
+  },
+
+  auth: {
+    enableDemoUsers: process.env.NODE_ENV === 'production'
+      ? false
+      : process.env.ENABLE_DEMO_USERS === 'true',
+    demoUserEmail: process.env.DEMO_USER_EMAIL || 'demo@adflow.com',
+    demoUserPassword: process.env.DEMO_USER_PASSWORD || '123456',
+    demoCreatorEmail: process.env.DEMO_CREATOR_EMAIL || 'creator@adflow.com',
+    demoCreatorPassword: process.env.DEMO_CREATOR_PASSWORD || '123456'
   }
 };
 
@@ -182,7 +192,9 @@ function validarConfiguracion() {
   const requeridos = [
     'MONGODB_URI',
     'JWT_SECRET',
-    'JWT_REFRESH_SECRET'
+    'JWT_REFRESH_SECRET',
+    'SESSION_SECRET',
+    'ENCRYPTION_KEY'
   ];
 
   const faltantes = requeridos.filter(key => !process.env[key]);

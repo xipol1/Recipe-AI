@@ -10,6 +10,7 @@ const {
 } = require('../middleware/auth');
 const { validarCampos } = require('../middleware/validarCampos');
 const { limitadorAPI, limitadorEndpoint } = require('../middleware/rateLimiter');
+const { AD_STATES } = require('../constants/enums');
 
 /**
  * Validaciones para crear anuncio
@@ -226,7 +227,7 @@ const validacionesBusqueda = [
   
   query('estado')
     .optional()
-    .isIn(['borrador', 'pendiente_aprobacion', 'aprobado', 'rechazado', 'activo', 'pausado', 'completado', 'cancelado', 'expirado'])
+    .isIn(AD_STATES)
     .withMessage('Estado no válido'),
   
   query('tipoAnuncio')
@@ -319,7 +320,7 @@ router.get('/',
     
     query('estado')
       .optional()
-      .isIn(['borrador', 'pendiente_aprobacion', 'aprobado', 'rechazado', 'activo', 'pausado', 'completado', 'cancelado', 'expirado'])
+      .isIn(AD_STATES)
       .withMessage('Estado no válido'),
     
     query('tipoAnuncio')
